@@ -1,10 +1,16 @@
+import logging
+
 from flask import Flask
 from config import Config
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-
+    logging.basicConfig(
+        filename=app.config['SECURITY_LOGGING']['filename'],
+        level=app.config['SECURITY_LOGGING']['level'],
+        format=app.config['SECURITY_LOGGING']['format']
+    )
     # Khởi tạo thư mục lưu trữ QR Code
     import os
     if not os.path.exists(app.config['QR_CODE_DIR']):

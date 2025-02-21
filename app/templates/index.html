@@ -1,19 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>QR Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Generator Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --hover-color: #34495e;
+        }
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .qr-preview {
+            transition: transform 0.3s ease;
+        }
+        .qr-preview:hover {
+            transform: scale(1.05);
+        }
+        .download-btn {
+            background: var(--primary-color);
+            color: white !important;
+        }
+        .download-btn:hover {
+            background: var(--hover-color);
+        }
+    </style>
 </head>
-<body>
-    <h1>Generate QR Code</h1>
-    <form method="POST">
-        <input type="text" name="data" placeholder="Enter data" required>
-        <button type="submit">Generate</button>
-    </form>
+<body class="d-flex flex-column">
+    <main class="flex-grow-1">
+        <div class="container main-container">
+            <h1 class="text-center mb-4">🔄 QR Code Generator</h1>
 
-    {% if qr_image %}
-    <div class="qr-result">
-        <img src="{{ qr_image }}" alt="Generated QR Code">
-    </div>
-    {% endif %}
+            <form method="POST" class="mb-5">
+                <div class="mb-3">
+                    <input type="text"
+                           class="form-control form-control-lg"
+                           name="data"
+                           placeholder="Nhập URL hoặc văn bản..."
+                           required
+                           value="{{ request.form.data if request.form.data }}">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <select class="form-select" name="size">
+                            <option value="200" {{ 'selected' if request.form.get('size', '200') == '200' }}>Kích thước: Trung bình</option>
+                            <option value="300" {{ 'selected' if request.form.size == '300' }}>Lớn</option>
+                            <option value="150" {{ 'selected' if request.form.size == '150' }}>Nhỏ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select" name="error_correction">
+                            <option value="L" {{ 'selected' if request.form.get('error_correction', 'L') == 'L' }}>Sửa lỗi: Thấp</option>
+                            <option value="M" {{ 'selected' if request.form.error_correction == 'M' }}>Trung bình</option>
+                            <option value="Q" {{ 'selected' if request.form.error_correction == 'Q' }}>Cao</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-lg btn-primary w-100">
+                    Tạo QR Code ⚡
+                </button>
+            </form>
+
+            {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+
+            {% if qr_image %}
+            <section class="text-center">
+                <div class="qr-preview mb-3">
+                    <img src="{{ qr_image }}"
+                         class="img-fluid border rounded"
+                         alt="Generated QR Code"
+                         style="max-width: {{ request.form.size }}px">
+                </div>
+                <a href="{{ qr_image }}?download=1"
+                   class="btn download-btn"
+                   download="qrcode.png">
+                   ⬇️ Tải xuống PNG
+                </a>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

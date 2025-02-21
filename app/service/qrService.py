@@ -1,39 +1,40 @@
 import qrcode
 import os
-from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class QRService:
     @staticmethod
     def generate_qr(data, filename=None):
-        # Đường dẫn thư mục QR
-        QR_DIR = 'app/static/qr_codes'  # Đổi tên thư mục sang snake_case
-        RELATIVE_STATIC_PATH = '/static/qr_codes/'  # Đường dẫn URL tĩnh
+        QR_DIR = 'app/static/qr_codes'
+        RELATIVE_STATIC_PATH = '/static/qr_codes/'
 
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            error_correction=getattr(qrcode.constants, f'ERROR_CORRECT_{data.error_correction}'),
             box_size=10,
             border=4,
         )
-        qr.add_data(data)
+        qr.add_data(data.content)
         qr.make(fit=True)
 
-        img = qr.make_image(fill_color="black", back_color="white")
+        img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
 
-        # Tạo thư mục nếu chưa tồn tại
+        # Thêm watermark nếu không dùng HTTPS
+        if not data.content.startswith('https://'):
+            draw = ImageDraw.Draw(img)
+            draw.text((10, 10), "KHÔNG BẢO MẬT", fill="red")
+            logger.warning(f"Generated insecure QR for: {data.content[:50]}...")
+
         os.makedirs(QR_DIR, exist_ok=True)
 
-        if not filename:
-            buffer = BytesIO()
-            img.save(buffer)
-            buffer.seek(0)
-            return buffer
-        else:
-            # Tạo đường dẫn file vật lý
+        if filename:
             physical_path = os.path.join(QR_DIR, filename)
-
-            # Tạo đường dẫn URL truy cập
-            url_path = f"{RELATIVE_STATIC_PATH}{filename}"
-
             img.save(physical_path)
-            return url_path  # Tra ve url
+            logger.info(f"QR saved to: {physical_path}")
+            return f"{RELATIVE_STATIC_PATH}{filename}"
+
+        return img
